@@ -1,0 +1,21 @@
+<h1>Candidate Details</h1>
+{% if errors%}
+ {%for e in errors%}
+   <li>{{e}}</li>
+ {%endfor%}
+{%endif%}
+
+
+<form method="post">
+    <label>Name:</label>
+    <input name="name" type="text" value="{{name}}">
+    <lable>Email:</lable>
+    <input name="email" type='text'>
+    <lable>Phone:</lable>
+    <input name="phone" type="text">
+    <label>ECE classification:</lable>
+    <input name="level" type="text">
+    <label>Experience(which age group):</label>
+    <input name='experience' type="textarea">
+    <button type="submit">Submit</button>
+</form>
