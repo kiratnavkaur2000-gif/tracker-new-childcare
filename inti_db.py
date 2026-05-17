@@ -25,7 +25,21 @@ CREATE TABLE IF NOT EXISTS candidates (
                 FOREIGN KEY (daycare_id) REFERENCES daycare(id),
                 UNIQUE (daycare_id,email)
 );
-"""
+CREATE TABLE IF NOT EXISTS users (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                 name TEXT NOT NULL,
+                 email TEXT UNIQUE NOT NULL,
+                 password_hash TEXT NOT NULL,
+                 role TEXT NOT NULL
+                 
+                 );
+CREATE TABLE IF NOT EXISTS daycare_membership(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INGTER NOT NULL,
+                daycare_id INTEGER NOT NULL,
+                FOREIGN KEY (daycare_id) REFERENCES daycare(id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+);"""
 
 def main():
  conn = sqlite3.connect(db_name)

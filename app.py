@@ -1,8 +1,12 @@
-from flask import Flask,request,render_template,redirect,url_for
+from flask import Flask,request,render_template,redirect,url_for,session
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
+
 import os
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
+
+app.secret_key = 'hiring@'
 
 UPLOAD_FOLDER = 'uploads'
 RESUME_FOLDER = os.path.join(UPLOAD_FOLDER,'resumes')
@@ -127,6 +131,116 @@ def home(daycare_id):
 @app.route('/success_message')
 def success_message():
     return render_template('sucess_message.html')
+
+@app.route('/admin/daycares/<int:daycare_id>/create-user', methods=['GET','POST'])
+def registration_page(daycare_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    check_daycare = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
+    if check_daycare is None:
+        return 'No daycare found.'
+    
+    errors = []
+    if request.method == 'POST':
+        name = request.form.get('name','').strip()
+        email = request.form.get('email','').strip()
+        password = request.form.get('password','').strip()
+        
+        role = request.form.get('role','').strip()
+        if not name:
+            errors.append('Name required.')
+        if not email or '@' not in email:
+            errors.append('email required.')
+        if not password:
+            errors.append('password required.')
+        
+        if not role:
+            errors.append('role required.')
+        
+        
+        if not errors:
+            password_hash= generate_password_hash(password)
+            
+            cursor.execute('INSERT INTO users(name,email,password_hash,role) VALUES(?,?,?,?)',(name,email,password_hash,role))
+            
+            new_user = cursor.lastrowid
+            cursor.execute('INSERT INTO daycare_membership(daycare_id,user_id) VALUES(?,?)',(daycare_id,new_user))
+            
+        
+            conn.commit()
+            conn.close()
+    return render_template('register.html',errors=errors,daycare=check_daycare)
+
+@app.route('/login',methods=['GET','POST'])
+def login():
+    
+    
+    errors=[]
+    if request.method == 'POST':
+      email = request.form.get('email','').strip()
+      password = request.form.get('password','').strip()
+
+      if not email or '@' not in email:
+          errors.append('invalid email')
+      if not password:
+          errors.append('password required')
+      
+      if not errors:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        user = cursor.execute('SELECT * FROM users WHERE email=?',(email,)).fetchone()
+        if user is None:
+            conn.close()
+            errors.append('Invalid email or password.')
+        else:
+          password_check=check_password_hash(user['password_hash'],password)
+        if not password_check:
+            errors.append('Invalid email or password.')
+            conn.close()
+        else:
+             membership_check = cursor.execute('SELECT * FROM daycare_membership WHERE user_id=?',(user['id'],)).fetchone()
+             if not membership_check:
+                 conn.close()
+                 return 'access denied'
+             session['user_id']= user['id'] 
+             session['role'] =user['role'] 
+        
+             conn.close()
+             return redirect(url_for('director_dashboard',daycare_id=membership_check['daycare_id']))
+    return render_template('login.html', errors=errors)
+
+@app.route('/director_dashboard/<int:daycare_id>',methods=['GET','POST'])
+def director_dashboard(daycare_id):
+
+    user_id =session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    conn=get_db()
+    cursor=conn.cursor()
+    daycare_existence = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
+    if daycare_existence is None:
+        conn.close()
+        return 'No daycare found', 404
+    membership_check =cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id=? AND user_id=?',(daycare_id,user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access Denied',403
+    
+    applications = cursor.execute('SELECT * FROM candidates WHERE daycare_id=? ORDER BY created_at DESC',(daycare_id,)).fetchall()
+    conn.close()
+    return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence)
+          
+          
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
                                                              

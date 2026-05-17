@@ -1,0 +1,17 @@
+<h1>Applications</h1>
+{%if applications%}
+{%for app in applications%}
+ <h2>Name:{{app['name']}}</h2></li>
+ <li><label>Email:{{app['email']}}</label></li>
+ <li><label>Phone:{{app['phone']}}</label></li>
+ <li><label>Classification:{{app['classification']}}</label></li>
+ <li><label>Experience Age Group:{{app['experience']}}</label></li>
+ <li><label>Resume:{{app['resume_path']}}</label></li>
+ <li><label>Created at:{{app['created_at']}}</label></li>
+ 
+
+ 
+{%endfor%}
+{%else%}
+<p>No applications yet</p>
+{%endif%}
