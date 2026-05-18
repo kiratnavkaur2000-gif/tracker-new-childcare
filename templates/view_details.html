@@ -1,0 +1,19 @@
+<h1>{{candidate['name']}}</h1>
+<form method="POST">
+    <label>Interview Notes:</label>
+    <textarea name="notes">{{ candidate['interview_notes'] or '' }}</textarea>
+    
+    <br>
+    <label>Rating:</label>
+    <select name="rating">
+        <option value="">Select rating</option>
+        <option value="1">Not a fit</option>
+        <option value="2">Concerns</option>
+        <option value="3">Consider</option>
+        <option value="4">Strong candidate</option>
+        <option value="5">Top candidate</option>
+   </select>
+    <br>
+    <button type="submit">Save interview notes</button>
+
+</form>

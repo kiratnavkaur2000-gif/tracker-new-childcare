@@ -1,4 +1,4 @@
-from flask import Flask,request,render_template,redirect,url_for,session
+from flask import Flask,request,render_template,redirect,url_for,session,send_file
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -194,7 +194,7 @@ def login():
             conn.close()
             errors.append('Invalid email or password.')
         else:
-          password_check=check_password_hash(user['password_hash'],password)
+         password_check=check_password_hash(user['password_hash'],password)
         if not password_check:
             errors.append('Invalid email or password.')
             conn.close()
@@ -227,19 +227,113 @@ def director_dashboard(daycare_id):
         conn.close()
         return 'Access Denied',403
     
-    applications = cursor.execute('SELECT * FROM candidates WHERE daycare_id=? ORDER BY created_at DESC',(daycare_id,)).fetchall()
+    
+    if request.method=='POST':
+        new_status = request.form.get('status','').strip()
+        candidate_id =request.form.get('candidate_id')
+        allowed_status = ['reviewing','interview','selected','rejected']
+        if new_status  not in allowed_status:
+            conn.close()
+            return 'Not allowed status',400
+
+        cursor.execute('UPDATE candidates SET status=? WHERE id=? AND daycare_id=?',(new_status,candidate_id,daycare_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('director_dashboard', daycare_id=daycare_id))
+    applications = cursor.execute(
+        '''
+        SELECT * FROM candidates
+        WHERE daycare_id=?
+        ORDER BY created_at DESC
+        ''',
+        (daycare_id,)
+    ).fetchall()
+
     conn.close()
     return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence)
           
-          
+@app.route('/view_resume/<int:candidate_id>')
+def view_resume(candidate_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    conn = get_db()
+    cursor=conn.cursor()
+    candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    if candidate is None:
+        return 'No candidate exists.',404
+    membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access denied',403
+    resume_path = candidate['resume_path']
+    
+    conn.close()
+    if not resume_path or not os.path.exists(resume_path):    #check of resume exists
+        return 'Resume file not found', 404
+    return send_file(resume_path) 
+    
+
+@app.route('/view_coverletter/<int:candidate_id>')
+def view_coverletter(candidate_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    conn = get_db()
+    cursor=conn.cursor()
+    candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    if candidate is None:
+        return 'No candidate exists.',404
+    membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access denied',403
+    
+    cover_letter_path =candidate['cover_letter_path']
+    conn.close()
+    if not cover_letter_path or not os.path.exists(cover_letter_path):
+        return 'Resume file not found', 404
+    return send_file(cover_letter_path) 
 
 
+@app.route('/candidate_detail/<int:candidate_id>',methods=['GET','POST'])
+def view_details(candidate_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    conn = get_db()
+    cursor=conn.cursor()
+    candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    if candidate is None:
+        return 'No candidate exists.',404
+    membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access denied',403
+    
+    if request.method=='POST':
+        notes = request.form.get('notes','').strip()
+        rating = request.form.get('rating','').strip()
+        
+        allowed_ratings=['1','2','3','4','5']
+        if rating not in allowed_ratings:
+            conn.close()
+            return 'Invalid rating', 400
+
+        cursor.execute('UPDATE candidates SET interview_notes=?,interview_rating=?  WHERE id=?',(notes,rating,candidate['id']))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('view_details', candidate_id=candidate_id))
+
+    conn.close()
 
 
-
-
-
-
+    return render_template('view_details.html',candidate=candidate)
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

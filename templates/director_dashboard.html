@@ -6,9 +6,33 @@
  <li><label>Phone:{{app['phone']}}</label></li>
  <li><label>Classification:{{app['classification']}}</label></li>
  <li><label>Experience Age Group:{{app['experience']}}</label></li>
- <li><label>Resume:{{app['resume_path']}}</label></li>
+ <li>Resume:
+    <a href="{{url_for('view_resume',candidate_id=app['id'])}}" target="_blank">View Resume</a>
+ </li>
+ {%if app['cover_letter_path']%}
+ <li>Cover letter:
+    <a href="{{url_for('view_coverletter',candidate_id=app['id'])}}" target="_blank">View cover letter</a>
+ </li>
+ {%else%}
+  <li>Cover letter:Not uploaded</li>
+ {%endif%}
  <li><label>Created at:{{app['created_at']}}</label></li>
+ <a href="{{url_for('view_details',candidate_id=app['id'])}}">View Details</a>
+ <form method="POST">
+ <input type="hidden" name="candidate_id" value="{{app['id']}}">
  
+ <label>Current Status:</label>
+ <select name="status">
+   <option value="">Select status</option>
+   <option value="reviewing">Reviewing</option>
+   <option value="interview">Interview</option>
+   <option value="selected">Selected</option>
+   <option value="rejected">Rejected</option>
+ </select>
+ <button type="submit">Update stauts</button>
+  
+
+</form>
 
  
 {%endfor%}
