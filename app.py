@@ -1,7 +1,7 @@
 from flask import Flask,request,render_template,redirect,url_for,session,send_file
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import datetime
 import os
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
@@ -27,7 +27,25 @@ def get_file_extension(filename):
     return filename.rsplit(".", 1)[1].lower()
 
 
+def build_interview_email(candidate,daycare,interview_date,interview_time,interview_location):
+            email={
+                  'to_email' : candidate['email'],
+                   'subject' : "Interview Invitation",
+                   'email_body' : f"""
+            Hi {candidate['name']},
 
+            Thank you for applying to {daycare['name']}.
+            We would like to invite you for an interview.
+            Date: {interview_date}
+            Time: {interview_time}
+            Location: {interview_location}
+            
+            Please reply to confirm if this time works for you.
+
+            Thank you,
+            {daycare['name']}"""
+            }
+            return email
 def get_db():
     conn = sqlite3.connect('hiring_tracker.db')
     conn.row_factory=sqlite3.Row
@@ -231,7 +249,7 @@ def director_dashboard(daycare_id):
     if request.method=='POST':
         new_status = request.form.get('status','').strip()
         candidate_id =request.form.get('candidate_id')
-        allowed_status = ['reviewing','interview','selected','rejected']
+        allowed_status = ['shortlisted','interview_scheduled','interviewed','rejected','selected']
         if new_status  not in allowed_status:
             conn.close()
             return 'Not allowed status',400
@@ -297,9 +315,61 @@ def view_coverletter(candidate_id):
         return 'Resume file not found', 404
     return send_file(cover_letter_path) 
 
-
-@app.route('/candidate_detail/<int:candidate_id>',methods=['GET','POST'])
+@app.route('/view_details/<int:candidate_id>',methods=['GET','POST'])
 def view_details(candidate_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    conn = get_db()
+    cursor=conn.cursor()
+    candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    if candidate is None:
+        conn.close()
+        return 'No candidate exists.',404
+    candidate_email = (candidate['email'] or '').strip()
+    membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access denied',403
+    errors=[]
+    if request.method =='POST':
+        interview_date = request.form.get('interview_date','').strip()
+        interview_time = request.form.get('interview_time','').strip()
+        interview_location = request.form.get('interview_location','').strip()
+        
+        if not interview_date:
+            errors.append('Interview date required.')
+        if not interview_time:
+            errors.append('Interview time required.')
+        if not interview_location:
+            errors.append('Interview Location required.')
+        if not candidate_email:
+            errors.append('Candidate email is missing. Cannot send interview email.')
+        if not errors:
+            interview_email_sent_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            daycare = cursor.execute( 'SELECT * FROM daycare WHERE id=?', (candidate['daycare_id'],)).fetchone()
+            if daycare is None:
+             conn.close()
+             return 'Daycare not found.', 404
+
+            email= build_interview_email(
+                              candidate,
+                               daycare,
+                               interview_date,
+                                interview_time,
+                            interview_location)
+            print("To:", email["to_email"])
+            print("Subject:", email["subject"])
+            print(email["email_body"])
+            cursor.execute('''UPDATE candidates SET interview_date=?,interview_time=?,interview_location=?,interview_email_sent_at=?,status=? WHERE id=?''',(interview_date,interview_time,interview_location,interview_email_sent_at,'interview_scheduled',candidate['id']))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('view_details',candidate_id=candidate['id']))
+    return render_template('view_details.html',candidate=candidate,errors=errors)
+@app.route('/post_interview_details/<int:candidate_id>',methods=['GET','POST'])
+def post_interview_details(candidate_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect('/login')
@@ -327,13 +397,17 @@ def view_details(candidate_id):
         conn.commit()
         conn.close()
 
-        return redirect(url_for('view_details', candidate_id=candidate_id))
+        return redirect(url_for('post_interview_details', candidate_id=candidate_id))
 
     conn.close()
 
 
-    return render_template('view_details.html',candidate=candidate)
+    return render_template('post_interview_details.html',candidate=candidate)
     
+@app.route('/logout')
+def logout():
+    session.pop('user_id',None)
+    return redirect(url_for('login'))
 
 if __name__ == "__main__":
     app.run(debug=True)
