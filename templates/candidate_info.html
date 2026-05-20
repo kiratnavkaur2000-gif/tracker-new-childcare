@@ -1,26 +1,65 @@
-<h1>Candidate Details</h1>
-{% if errors%}
- {%for e in errors%}
-   <li>{{e}}</li>
- {%endfor%}
-{%endif%}
+{% extends "base.html" %}
 
-
-<form method="post" enctype="multipart/form-data">
-    <label>Name:</label>
-    <input name="name" type="text" value="{{name}}">
-    <label>Email:</label>
-    <input name="email" type='text'>
-    <label>Phone:</lable>
-    <input name="phone" type="text">
-    <label>ECE classification:</label>
-    <input name="level" type="text">
-    <label>Experience(which age group):</label>
-    <input name='experience' type="textarea">
+{% block content %}
+<div class="container mt-4">
+    <h1>Candidate Application</h1>
     
-    <label>Resume:</label>
-    <input name="resume" type="file" required>
-    <label>Cover letter:</label>
-    <input name="cover_letter" type="file">
-    <button type="submit">Submit</button>
+    {% if errors %}
+        <div class="alert alert-danger">
+            <ul>
+            {% for e in errors %}
+                <li>{{ e }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="row g-3">
+        
+        <div class="col-md-6">
+            <label class="form-label">Full Name</label>
+            <input name="name" type="text" class="form-control" value="{{ name }}" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input name="email" type="email" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input name="phone" type="tel" class="form-control" placeholder="(204) 555-0100" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">ECE Classification</label>
+            <select name="level" class="form-select" required>
+                <option value="">Choose...</option>
+                <option value="CCA">CCA</option>
+                <option value="ECE II">ECE II</option>
+                <option value="ECE III">ECE III</option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Experience (Age groups worked with)</label>
+            <textarea name="experience" class="form-control" rows="3" required></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Resume (PDF, DOCX)</label>
+            <input name="resume" type="file" class="form-control" accept=".pdf,.doc,.docx" required>
+        </div>
+         
+        <div class="col-md-6">
+            <label class="form-label">Cover Letter</label>
+            <input name="cover_letter" type="file" class="form-control" accept=".pdf,.doc,.docx">
+        </div>
+        
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-lg">Submit Application</button>
+        </div>
     </form>
+</div>
+{% endblock %}

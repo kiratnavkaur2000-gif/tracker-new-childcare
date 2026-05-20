@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{candidate['name']}}</h1>
+
+<li>Resume:
+    <a href="{{url_for('view_resume',candidate_id=candidate['id'])}}" target="_blank">View Resume</a>
+ </li>
+ {%if candidate['cover_letter_path']%}
+ <li>Cover letter:
+    <a href="{{url_for('view_coverletter',candidate_id=candidate['id'])}}" target="_blank">View cover letter</a>
+ </li>
+ {%else%}
+  <li>Cover letter:Not uploaded</li>
+ {%endif%}
+ 
+ 
+ <div><a href="{{url_for('interview_setup',candidate_id =candidate['id'])}}"  class="btn btn-success">Setup interview</a>
+    </div>
+<div><a href="{{url_for('director_dashboard',daycare_id=candidate['daycare_id'])}}"  class="btn btn-success">Back to Dashboard</a>
+    </div>
+
+{% endblock %}
+    

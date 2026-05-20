@@ -1,1 +1,21 @@
-<p>Thank you. You're application is recieved. selcted candidates will be contacted for the interview.</p>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h1 class="display-4 text-success">✓</h1>
+                    <h2 class="card-title">Application Received</h2>
+                    <p class="card-text mt-3">
+                        Thank you for your interest! Your application has been successfully submitted. 
+                        Our hiring team will review your qualifications and contact selected candidates for an interview.
+                    </p>
+                    <hr>
+                    
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

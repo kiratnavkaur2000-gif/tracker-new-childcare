@@ -148,6 +148,7 @@ def home(daycare_id):
 
 @app.route('/success_message')
 def success_message():
+
     return render_template('sucess_message.html')
 
 @app.route('/admin/daycares/<int:daycare_id>/create-user', methods=['GET','POST'])
@@ -212,11 +213,11 @@ def login():
             conn.close()
             errors.append('Invalid email or password.')
         else:
-         password_check=check_password_hash(user['password_hash'],password)
-        if not password_check:
-            errors.append('Invalid email or password.')
-            conn.close()
-        else:
+            password_check=check_password_hash(user['password_hash'],password)
+            if not password_check:
+              errors.append('Invalid email or password.')
+              conn.close()
+            else:
              membership_check = cursor.execute('SELECT * FROM daycare_membership WHERE user_id=?',(user['id'],)).fetchone()
              if not membership_check:
                  conn.close()
@@ -315,8 +316,27 @@ def view_coverletter(candidate_id):
         return 'Resume file not found', 404
     return send_file(cover_letter_path) 
 
-@app.route('/view_details/<int:candidate_id>',methods=['GET','POST'])
-def view_details(candidate_id):
+@app.route('/viewdetails_2/<int:candidate_id>')
+def viewdetails_2(candidate_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    
+    conn = get_db()
+    cursor=conn.cursor()
+    candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    if candidate is None:
+        conn.close()
+        return 'No candidate exists.',404
+    candidate_email = (candidate['email'] or '').strip()
+    membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access denied',403
+    return render_template('viewdetails_2.html',candidate=candidate)
+
+@app.route('/interview_setup/<int:candidate_id>',methods=['GET','POST'])
+def interview_setup(candidate_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect('/login')
@@ -367,7 +387,7 @@ def view_details(candidate_id):
             conn.commit()
             conn.close()
             return redirect(url_for('view_details',candidate_id=candidate['id']))
-    return render_template('view_details.html',candidate=candidate,errors=errors)
+    return render_template('interview_setup.html',candidate=candidate,errors=errors)
 @app.route('/post_interview_details/<int:candidate_id>',methods=['GET','POST'])
 def post_interview_details(candidate_id):
     user_id = session.get('user_id')

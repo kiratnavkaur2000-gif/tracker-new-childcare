@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{candidate['name']}}</h1>
+{%if errors%}
+ {%for e in errors%}
+ <li>{{e}}</li>
+ {%endfor%}
+{%endif%}
+{% if candidate['interview_date'] %}
+   <p>Interview Already set up.See following details.</p>
+  <p>Interview Date: {{ candidate['interview_date'] }}</p>
+  <p>Interview Time: {{ candidate['interview_time'] }}</p>
+  <p>Interview Location: {{ candidate['interview_location'] }}</p>
+  <p>Interview email sent at: {{ candidate['interview_email_sent_at'] }}</p>
+
+{% else %}
+  <p>No interview scheduled yet.</p>
+{% endif %}
+<form method="POST" class="card p-4 shadow-sm">
+    <label>Email:{{candidate['email']}}</label>
+    <label>Phone:{{candidate['phone']}}</label>
+
+    <h2>Interview Schdeule</h2>
+    <div class="mb-3">
+        <label class="form-label">Interview Date</label>
+        <input type="date" name="interview_date" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Interview Time</label>
+        <input type="time" name="interview_time" class="form-control">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Interview Location</label>
+        <input type="text" name="interview_location" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Schedule Interview & Send Email
+    </button>
+    
+</form>
+
+{% endblock %}
