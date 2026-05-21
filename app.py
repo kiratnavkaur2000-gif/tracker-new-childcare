@@ -212,6 +212,8 @@ def login():
         if user is None:
             conn.close()
             errors.append('Invalid email or password.')
+        
+                
         else:
             password_check=check_password_hash(user['password_hash'],password)
             if not password_check:
@@ -386,7 +388,7 @@ def interview_setup(candidate_id):
             cursor.execute('''UPDATE candidates SET interview_date=?,interview_time=?,interview_location=?,interview_email_sent_at=?,status=? WHERE id=?''',(interview_date,interview_time,interview_location,interview_email_sent_at,'interview_scheduled',candidate['id']))
             conn.commit()
             conn.close()
-            return redirect(url_for('view_details',candidate_id=candidate['id']))
+            return redirect(url_for('viewdetails_2',candidate_id=candidate['id']))
     return render_template('interview_setup.html',candidate=candidate,errors=errors)
 @app.route('/post_interview_details/<int:candidate_id>',methods=['GET','POST'])
 def post_interview_details(candidate_id):
