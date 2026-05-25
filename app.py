@@ -3,10 +3,17 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import os
+from dotenv import load_dotenv
+load_dotenv()
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 app.secret_key = 'hiring@'
+
+print("FROM EMAIL:", os.getenv("FROM_EMAIL"))
+print("SENDGRID KEY EXISTS:", os.getenv("SENDGRID_API_KEY") is not None)
 
 UPLOAD_FOLDER = 'uploads'
 RESUME_FOLDER = os.path.join(UPLOAD_FOLDER,'resumes')
@@ -46,6 +53,18 @@ def build_interview_email(candidate,daycare,interview_date,interview_time,interv
             {daycare['name']}"""
             }
             return email
+def send_email_with_sendgrid(email):
+    message = Mail(
+        from_email=os.getenv("FROM_EMAIL"),
+        to_emails=email["to_email"],
+        subject=email["subject"],
+        plain_text_content=email["email_body"]
+    )
+
+    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+    response = sg.send(message)
+
+    return response.status_code
 def get_db():
     conn = sqlite3.connect('hiring_tracker.db')
     conn.row_factory=sqlite3.Row
@@ -376,15 +395,24 @@ def interview_setup(candidate_id):
              conn.close()
              return 'Daycare not found.', 404
 
-            email= build_interview_email(
-                              candidate,
-                               daycare,
-                               interview_date,
-                                interview_time,
-                            interview_location)
+            email= build_interview_email(candidate, daycare, interview_date, interview_time,interview_location)
             print("To:", email["to_email"])
             print("Subject:", email["subject"])
             print(email["email_body"])
+            try:
+               status_code = send_email_with_sendgrid(email)
+               if status_code < 200 or status_code >= 300:
+                 errors.append("Email could not be sent. Please try again.")
+                 conn.close()
+                 return render_template(
+                    'interview_setup.html',candidate=candidate,errors=errors)
+            
+            except Exception as e:
+               errors.append("Email could not be sent. Please try again.")
+               print("SENDGRID ERROR:", e)
+               conn.close()
+               return render_template( 'interview_setup.html',candidate=candidate,errors=errors)
+            
             cursor.execute('''UPDATE candidates SET interview_date=?,interview_time=?,interview_location=?,interview_email_sent_at=?,status=? WHERE id=?''',(interview_date,interview_time,interview_location,interview_email_sent_at,'interview_scheduled',candidate['id']))
             conn.commit()
             conn.close()
