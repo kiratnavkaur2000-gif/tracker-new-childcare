@@ -337,23 +337,41 @@ def view_coverletter(candidate_id):
         return 'Resume file not found', 404
     return send_file(cover_letter_path) 
 
-@app.route('/viewdetails_2/<int:candidate_id>')
+@app.route('/viewdetails_2/<int:candidate_id>',methods=['GET','POST'])
 def viewdetails_2(candidate_id):
+    
     user_id = session.get('user_id')
     if not user_id:
         return redirect('/login')
-    
+    print("ROUTE HIT:", request.method)
     conn = get_db()
     cursor=conn.cursor()
     candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
+    
     if candidate is None:
         conn.close()
         return 'No candidate exists.',404
     candidate_email = (candidate['email'] or '').strip()
     membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
     if not membership_check:
+         conn.close()
+         return 'Access denied',403
+    
+    if request.method =='POST':
+        allowed_status=['shortlisted','interview_scheduled','interviewed','rejected','selected']
+        
+        new_status = request.form.get('status','').strip()
+        if new_status not in allowed_status:
+            conn.close()
+            return 'not allowed status',400
+        print("FULL FORM:", request.form)
+        print("NEW STATUS:", repr(new_status))
+        print("ALLOWED:", allowed_status)
+        cursor.execute('''UPDATE candidates SET status=? WHERE id =?''',(new_status,candidate['id']) )
+        conn.commit()
         conn.close()
-        return 'Access denied',403
+        return redirect(url_for('viewdetails_2', candidate_id=candidate_id))
+    conn.close()
     return render_template('viewdetails_2.html',candidate=candidate)
 
 @app.route('/interview_setup/<int:candidate_id>',methods=['GET','POST'])

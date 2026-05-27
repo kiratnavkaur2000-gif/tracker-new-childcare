@@ -1,25 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>{{candidate['name']}}</h1>
+<div class="container mt-4" style="max-width: 600px;"> <a
+        href="{{url_for('director_dashboard', daycare_id=candidate['daycare_id'])}}"
+        class="text-secondary text-decoration-none mb-3 d-inline-block">
+        &larr; Back to Dashboard
+    </a>
+    <div class="container mb-4">
+        <h2>{{candidate['name']}}</h2>
 
-<li>Resume:
-    <a href="{{url_for('view_resume',candidate_id=candidate['id'])}}" target="_blank">View Resume</a>
- </li>
- {%if candidate['cover_letter_path']%}
- <li>Cover letter:
-    <a href="{{url_for('view_coverletter',candidate_id=candidate['id'])}}" target="_blank">View cover letter</a>
- </li>
- {%else%}
-  <li>Cover letter:Not uploaded</li>
- {%endif%}
- 
- 
- <div><a href="{{url_for('interview_setup',candidate_id =candidate['id'])}}"  class="btn btn-success">Setup interview</a>
-    </div>
-<div><a href="{{url_for('director_dashboard',daycare_id=candidate['daycare_id'])}}"  class="btn btn-success">Back to Dashboard</a>
-    </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-bold text-secondary">
+                Application Documents
+            </div>
 
-{% endblock %}
-    
+            <ul class="list-group list-group-flush">
+                <li class="ist-group-item d-flex align-items-center gap-3 mb-2 p-3 ">
+                    <span class="fw-bold">Resume:</span>
+                    <a href="{{url_for('view_resume',candidate_id=candidate['id'])}}" class="btn btn-primary"
+                        target="_blank">View Resume</a>
+                </li>
+
+                {%if candidate['cover_letter_path']%}
+
+                <li class="list-group-item d-flex align-items-center gap-3 mb-2">
+                    <span class="fw-bold">Cover letter:</span>
+                    <a href="{{url_for('view_coverletter',candidate_id=candidate['id'])}}" class="btn btn-primary"
+                        target="_blank">View cover letter</a>
+
+                    {%else%}
+                    <span class="text-muted fst-italic">Not uploaded</span>
+                    {%endif%}
+                </li>
+            </ul>
+        </div>
+
+        <div class="card shadow-sm border-primary mb-4">
+            <div class="card-header bg-primary text-white fw-bold">
+                Pipeline Actions
+            </div>
+            <div class="card-body">
+                <label class="form-label text-secondary fw-bold small">Change Pipeline Stage:</label>
+                <form method="POST" class="d-flex align-items-center gap-2 mb-3">
+
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Update Status</option>
+                        <option value="shortlisted">Shortlisted</option>
+                        <option value="interview_scheduled">Interview Scheduled</option>
+                        <option value="interviewed">Interviewed</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="selected">Selected</option>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                </form>
+                <hr class="text-muted">
+                <label class="form-label text-secondary fw-bold small">Next Steps:</label>
+                <div class="d-grid">
+                    <a href="{{url_for('interview_setup', candidate_id=candidate['id'])}}" class="btn btn-success">
+                        Schedule Interview
+                    </a>
+                </div>
+
+            </div>
+
+            {% endblock %}
