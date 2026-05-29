@@ -1,12 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{candidate['name']}}</h1>
+<div class="container mt-4" style="max-width: 600px;"> <a
+        href="{{url_for('director_dashboard', daycare_id=candidate['daycare_id'])}}"
+        class="text-secondary text-decoration-none mb-3 d-inline-block">
+        &larr; Back to Dashboard
+    </a>
+<div class="container mb-4">
+        <h2>{{candidate['name']}}</h2>
+
 {%if errors%}
- {%for e in errors%}
- <li>{{e}}</li>
- {%endfor%}
+  <div class="alert alert-warning" role="alert">
+    <ul class="mb-0">
+      {%for e in errors%}
+        <li>{{e}}</li>
+      {%endfor%}
+    </ul>
+ </div>
+ 
 {%endif%}
+
+
 {% if candidate['interview_date'] %}
    <p>Interview Already set up.See following details.</p>
   <p>Interview Date: {{ candidate['interview_date'] }}</p>

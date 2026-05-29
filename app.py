@@ -446,6 +446,7 @@ def post_interview_details(candidate_id):
     cursor=conn.cursor()
     candidate = cursor.execute('SELECT * FROM candidates WHERE id=?',(candidate_id,)).fetchone()
     if candidate is None:
+        conn.close()
         return 'No candidate exists.',404
     membership_check= cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id =? AND user_id=?',(candidate['daycare_id'],user_id)).fetchone()
     if not membership_check:
@@ -453,23 +454,44 @@ def post_interview_details(candidate_id):
         return 'Access denied',403
     
     if request.method=='POST':
-        notes = request.form.get('notes','').strip()
-        rating = request.form.get('rating','').strip()
-        
-        allowed_ratings=['1','2','3','4','5']
-        if rating not in allowed_ratings:
+        form_type = request.form.get("form_type")
+        if form_type != 'interview_review' and form_type != 'hiring_checklist':
+            conn.close()
+            return 'invalid form action',400
+        elif form_type == 'interview_review':
+          notes = request.form.get('notes','').strip()
+          rating = request.form.get('rating','').strip()
+          
+          allowed_ratings=['1','2','3','4','5']
+          if rating not in allowed_ratings:
             conn.close()
             return 'Invalid rating', 400
+          cursor.execute('UPDATE candidates SET interview_notes=?,interview_rating=?,status=? WHERE id=?',(notes,rating,'interviewed',candidate['id']))
+          conn.commit()
+          conn.close()
+          return redirect(url_for('post_interview_details', candidate_id=candidate_id))
 
-        cursor.execute('UPDATE candidates SET interview_notes=?,interview_rating=?  WHERE id=?',(notes,rating,candidate['id']))
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('post_interview_details', candidate_id=candidate_id))
+        elif form_type == 'hiring_checklist': 
+          first_aid_cpr= request.form.get('first_aid_cpr','').strip()
+          police_clearance = request.form.get('police_clearance','').strip()
+          child_abuse_registry = request.form.get('child_abuse_registry','').strip()
+          
+          allowed_checklist_values=['available','not_available','pending','requested']
+          if first_aid_cpr not in allowed_checklist_values:
+              conn.close()
+              return 'invalid status',404
+          if police_clearance not in allowed_checklist_values:
+              conn.close()
+              return 'invalid status1',404
+          if child_abuse_registry not in allowed_checklist_values:
+              conn.close()
+              return 'invalid status2',404
+          cursor.execute('UPDATE candidates SET first_aid_cpr_status=?,police_check_status=?,child_abuse_check_status=?  WHERE id=?',(first_aid_cpr,police_clearance,child_abuse_registry,candidate['id']))
+          conn.commit()
+          conn.close()
+          return redirect(url_for('post_interview_details', candidate_id=candidate_id))
 
     conn.close()
-
-
     return render_template('post_interview_details.html',candidate=candidate)
     
 @app.route('/logout')

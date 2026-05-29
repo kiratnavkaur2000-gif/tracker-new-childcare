@@ -1,23 +1,107 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{candidate['name']}}</h1>
-<form method="POST">
-    <label>Interview Notes:</label>
-    <textarea name="notes">{{ candidate['interview_notes'] or '' }}</textarea>
-    
-    <br>
-    <label>Rating:</label>
-    <select name="rating">
-        <option value="">Select rating</option>
-        <option value="1">Not a fit</option>
-        <option value="2">Concerns</option>
-        <option value="3">Consider</option>
-        <option value="4">Strong candidate</option>
-        <option value="5">Top candidate</option>
-   </select>
-    <br>
-    <button type="submit">Save interview notes</button>
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="text-primary m-0">{{ candidate['name'] }}</h1>
+        <span class="badge bg-secondary fs-6">Candidate Review</span>
+    </div>
 
-</form>
+    <div class="row">
+        <!-- Left Column: Interview Notes -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="card-title m-0">Interview Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="form_type" value="interview_review">
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label fw-bold text-muted">Interview Notes:</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="8" placeholder="Enter detailed interview notes here...">{{ candidate['interview_notes'] or '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="rating" class="form-label fw-bold text-muted">Overall Rating:</label>
+                            
+                            <select class="form-select" id="rating" name="rating" >{{candidate['interview_rating'] or ''}}>
+                                <option value="" disabled selected>Select rating</option>
+                                <option value="1">⭐ 1 - Not a fit</option>
+                                <option value="2">⭐⭐ 2 - Concerns</option>
+                                <option value="3">⭐⭐⭐ 3 - Consider</option>
+                                <option value="4">⭐⭐⭐⭐ 4 - Strong candidate</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 - Top candidate</option>
+                            </select>
+                        </div>
+    
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save"></i> Save Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    
+
+<!-- Right Column: Hiring Checklist -->
+<div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title m-0">Hiring Checklist</h5>
+                </div>
+                <form method="POST" class="d-flex flex-column h-100">
+                    <input type="hidden" name="form_type" value="hiring_checklist">
+                    
+                    <ul class="list-group list-group-flush flex-grow-1">
+                        <!-- First Aid -->
+                        <li class="list-group-item py-3">
+                            <label class="form-label fw-bold mb-1">First Aid and CPR C</label>
+                            <select class="form-select form-select-sm" name="first_aid_cpr">
+                                <option value="not_available" {% if candidate['first_aid_cpr_status'] == "not_available" %}selected{% endif %}>Not Available</option>
+                                <option value="available" {% if candidate['first_aid_cpr_status'] == 'available' %}selected{% endif %}>Available</option>
+                                <option value="pending" {% if candidate['first_aid_cpr_status'] == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="requested" {% if candidate['first_aid_cpr_status'] == 'requested' %}selected{% endif %}>Requested</option>
+                            </select>
+                        </li>
+                        <!-- Police Check -->
+                        <li class="list-group-item py-3">
+                            <label class="form-label fw-bold mb-1">Police Record Check</label>
+                            <select class="form-select form-select-sm" name="police_clearance">
+                                <option value="not_available" {% if candidate['police_check_status'] == 'not_available' %}selected{% endif %}>Not Available</option>
+                                <option value="available" {% if candidate['police_check_status'] == 'available' %}selected{% endif %}>Available</option>
+                                <option value="pending" {% if candidate['police_check_status'] == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="requested" {% if candidate['police_check_status'] == 'requested' %}selected{% endif %}>Requested</option>
+                            </select>
+                        </li>
+                        
+                        <!-- Child Abuse Registry -->
+                        <li class="list-group-item py-3">
+                            <label class="form-label fw-bold mb-1">Child Abuse Registry Check</label>
+                            <select class="form-select form-select-sm" name="child_abuse_registry">
+                                <option value="not_available" {% if candidate['child_abuse_check_status'] == 'not_available' %}selected{% endif %}>Not Available</option>
+                                <option value="available" {% if candidate['child_abuse_check_status'] == 'available' %}selected{% endif %}>Available</option>
+                                <option value="pending" {% if candidate['child_abuse_check_status'] == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="requested" {% if candidate['child_abuse_check_status'] == 'requested' %}selected{% endif %}>Requested</option>
+                            </select>
+                        </li>
+                    </ul>
+                    
+                    <div class="card-footer bg-white border-top-0 pt-3 pb-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check2-circle"></i> Save Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    
+   
+
+
 {% endblock %}
