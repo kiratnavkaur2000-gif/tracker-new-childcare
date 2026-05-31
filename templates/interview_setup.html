@@ -1,59 +1,119 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 600px;"> <a
-        href="{{url_for('director_dashboard', daycare_id=candidate['daycare_id'])}}"
-        class="text-secondary text-decoration-none mb-3 d-inline-block">
+<div class="container mt-4 mb-5" style="max-width: 700px;"> 
+       <!-- Back Link --> 
+  <a href="{{url_for('director_dashboard', daycare_id=candidate['daycare_id'])}}"
+        class="text-secondary text-decoration-none mb-4 d-inline-block">
         &larr; Back to Dashboard
     </a>
-<div class="container mb-4">
-        <h2>{{candidate['name']}}</h2>
-
+<div class="mb-4">
+        <h2 class="m-0">Interview Management</h2>
+</div>
+         
+<!-- Error Handling -->
 {%if errors%}
-  <div class="alert alert-warning" role="alert">
+  <div class="alert alert-danger shadow-sm border-0 border-start border-4 border-danger" role="alert">
+    <h6 class="alert-heading fw-bold">Please correct the following:</h6>
     <ul class="mb-0">
-      {%for e in errors%}
+     {%for e in errors%}
         <li>{{e}}</li>
       {%endfor%}
     </ul>
  </div>
- 
-{%endif%}
+ {%endif%}
 
+ <!-- Candidate Info Card -->
+<div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-light border-bottom px-4 py-3">
+            <h6 class="card-title m-0 text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px;">Candidate Details</h6>
+        </div>
+        <div class="card-body px-4 py-3">
+            <div class="row">
+                <div class="col-sm-6 mb-3 mb-sm-0">
+                    <span class="text-muted d-block" style="font-size: 0.875rem;">Name</span>
+                    <span class="fw-semibold fs-5">{{ candidate['name'] }}</span>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-muted d-block" style="font-size: 0.875rem;">Email</span>
+                    <span class="fw-semibold fs-5">{{ candidate['email'] }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Existing Interview Details Alert -->
 
 {% if candidate['interview_date'] %}
-   <p>Interview Already set up.See following details.</p>
-  <p>Interview Date: {{ candidate['interview_date'] }}</p>
-  <p>Interview Time: {{ candidate['interview_time'] }}</p>
-  <p>Interview Location: {{ candidate['interview_location'] }}</p>
-  <p>Interview email sent at: {{ candidate['interview_email_sent_at'] }}</p>
-
-{% else %}
-  <p>No interview scheduled yet.</p>
-{% endif %}
-<form method="POST" class="card p-4 shadow-sm">
-    <label>Email:{{candidate['email']}}</label>
-    <label>Phone:{{candidate['phone']}}</label>
-
-    <h2>Interview Schdeule</h2>
-    <div class="mb-3">
-        <label class="form-label">Interview Date</label>
-        <input type="date" name="interview_date" class="form-control">
+<div class="alert alert-info shadow-sm mb-4 border-0 border-start border-4 border-info">
+        <h5 class="alert-heading fw-bold mb-3">Interview Scheduled</h5>
+        
+        <div class="row mb-2">
+            <div class="col-sm-4 text-muted fw-semibold">Date:</div>
+            <div class="col-sm-8">{{ candidate['interview_date'] }}</div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-sm-4 text-muted fw-semibold">Time:</div>
+            <div class="col-sm-8">{{ candidate['interview_time'] }}</div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-sm-4 text-muted fw-semibold">Location:</div>
+            <div class="col-sm-8">{{ candidate['interview_location'] }}</div>
+        </div>
+        
+        <hr class="my-3 opacity-25">
+        
+        <div class="text-muted" style="font-size: 0.85rem;">
+            <em>Invite sent at: {{ candidate['interview_email_sent_at'] }}</em>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Interview Time</label>
-        <input type="time" name="interview_time" class="form-control">
+    {% endif %} 
+
+
+<!-- Scheduling Form Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom px-4 py-3">
+            <h5 class="card-title m-0">
+                {% if candidate['interview_date'] %}
+                    Reschedule Interview
+                {% else %}
+                    Schedule New Interview
+                {% endif %}
+            </h5>
+        </div>
+
+<div class="card-body px-4 py-4">
+<form method="POST">
+    <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-muted">Interview Date</label>
+                        <!-- Prefills with existing data if available -->
+                        <input type="date" name="interview_date" class="form-control" value="{{ candidate['interview_date'] or '' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold text-muted">Interview Time</label>
+                        <input type="time" name="interview_time" class="form-control" value="{{ candidate['interview_time'] or '' }}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-muted">Interview Location</label>
+                    <input type="text" name="interview_location" class="form-control" placeholder="e.g., Office Room 2 or Video Link" value="{{ candidate['interview_location'] or '' }}">
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        {% if candidate['interview_date'] %}
+                            Update Schedule & Send Email
+                        {% else %}
+                            Schedule Interview & Send Email
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Interview Location</label>
-        <input type="text" name="interview_location" class="form-control">
-    </div>
-
-    <button type="submit" class="btn btn-success">
-        Schedule Interview & Send Email
-    </button>
-    
-</form>
+</div>   
 
 {% endblock %}

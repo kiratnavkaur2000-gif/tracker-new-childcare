@@ -20,8 +20,10 @@ RESUME_FOLDER = os.path.join(UPLOAD_FOLDER,'resumes')
 COVER_LETTER_FOLDER = os.path.join(UPLOAD_FOLDER,'cover_letters')
 
 
+
 os.makedirs(RESUME_FOLDER, exist_ok=True)
 os.makedirs(COVER_LETTER_FOLDER, exist_ok=True)
+
 allowed_files = {'pdf','doc','docx'}
 
 def allowed_file(filename):
