@@ -37,10 +37,11 @@
 
         <div class="card shadow-sm border-primary mb-4">
             <div class="card-header bg-primary text-white fw-bold">
-                Pipeline Actions
+                Hiring Actions
             </div>
             <div class="card-body">
-                <label class="form-label text-secondary fw-bold small">Change Pipeline Stage:</label>
+                <label class="form-label text-secondary fw-bold small">Current Status:{{candidate['status']}}</label>
+                <br><label class="form-label text-secondary fw-bold small">Update Candidate Status:</label>
                 <form method="POST" class="d-flex align-items-center gap-2 mb-3">
 
                     <select name="status" class="form-select form-select-sm">

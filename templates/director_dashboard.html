@@ -1,10 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <h1 class="mb-4">Applications</h1>
+<form method="GET" class="mb-3">
+
+   <label class="form-label fw-bold">Document Filter:</label>
+
+    <select name="document_filter" class="form-select w-auto d-inline-block">
+        <option value="all" {% if document_filter == 'all' %}selected{% endif %}>
+            All
+        </option>
+
+        <option value="complete" {% if document_filter == 'complete' %}selected{% endif %}>
+            Complete Documents
+        </option>
+
+        <option value="pending" {% if document_filter == 'pending' %}selected{% endif %}>
+            Pending Documents
+        </option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">
+        Filter
+    </button>
+</form>
 <table class="table table-hover align-middle">
-   <thead>
-      <tr>
+ <thead>
+   <tr>
          <th>Candidate</th>
          <th>Classification</th>
          <th>Status</th>
@@ -15,7 +37,7 @@
    </thead>
 
    <tbody>
-      {% for app in applications %}
+       {% for app in applications %}
       <tr>
          <td>
             <strong>{{ app['name'] }}</strong><br>
@@ -55,4 +77,5 @@
       {% endfor %}
    </tbody>
 </table>
+
 {% endblock %}

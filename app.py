@@ -268,31 +268,18 @@ def director_dashboard(daycare_id):
     if not membership_check:
         conn.close()
         return 'Access Denied',403
+    document_filter=request.args.get('document_filter','all')
+     
+    if document_filter=='complete':   
+        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND first_aid_cpr_status=? AND police_check_status=? AND child_abuse_check_status=? AND status =?',(daycare_id,'available','available','available','interviewed')).fetchall()
+    elif document_filter=='pending':
+        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND status=? AND(first_aid_cpr_status !=? OR police_check_status !=? OR child_abuse_check_status !=? )',(daycare_id,'interviewed','available','available','available')).fetchall()
+    else:
+        document_filter== 'all'
+        applications=cursor.execute('''SELECT * FROM candidates WHERE daycare_id=? ORDER BY created_at DESC''', (daycare_id,) ).fetchall()
     
-    
-    if request.method=='POST':
-        new_status = request.form.get('status','').strip()
-        candidate_id =request.form.get('candidate_id')
-        allowed_status = ['shortlisted','interview_scheduled','interviewed','rejected','selected']
-        if new_status  not in allowed_status:
-            conn.close()
-            return 'Not allowed status',400
-
-        cursor.execute('UPDATE candidates SET status=? WHERE id=? AND daycare_id=?',(new_status,candidate_id,daycare_id))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('director_dashboard', daycare_id=daycare_id))
-    applications = cursor.execute(
-        '''
-        SELECT * FROM candidates
-        WHERE daycare_id=?
-        ORDER BY created_at DESC
-        ''',
-        (daycare_id,)
-    ).fetchall()
-
     conn.close()
-    return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence)
+    return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence,document_filter=document_filter)
           
 @app.route('/view_resume/<int:candidate_id>')
 def view_resume(candidate_id):
