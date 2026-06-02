@@ -85,11 +85,18 @@ def daycares():
     return render_template('daycare.html')
 
 @app.route('/apply/<int:daycare_id>',methods=['GET','POST'])
-def home(daycare_id):
-    name=''
+def candidate_info(daycare_id):
+    conn=get_db()
+    cursor = conn.cursor()
+    daycare_existence = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
+    if not daycare_existence:
+        conn.close()
+        return 'No daycare exists',404
+        
     errors=[]
     if request.method == 'POST':
         name = request.form.get('name','').strip()
+        name_check= name.replace(" ","").replace("-","").replace("'","")   #removed all the spaces and hyphens
         email = request.form.get('email','').strip()
         phone = request.form.get('phone','').strip()
         clean_phone= phone.replace('(','').replace(')','').replace('-','').replace(' ','')
@@ -98,13 +105,26 @@ def home(daycare_id):
         resume = request.files.get('resume')    #here default value is NONE.
         cover_letter = request.files.get('cover_letter')   # here default value is None becoz we cant use empty string for files
         
-        print("FILES:", request.files)
-        print("RESUME:", resume)
-        print("RESUME FILENAME:", resume.filename if resume else None)
+        
         if not name:
             errors.append('Name required')
+        elif not name_check.isalpha():    # check if its only alphabets
+            errors.append('Please type valid name')
         if not email or '@' not in email:
             errors.append('Please enter valid email')
+        elif ' ' in email:
+            errors.append('Email cannot contain spaces')
+        elif email.count('@') !=1:
+            errors.append('Please enter valid email.')
+        else:
+            local_part,domain=email.split('@')   #unpacking now local_part=abc123 , domain=gmail.com
+            
+            if not local_part:
+                errors.append('Please enter a valid email.')
+            elif not domain:
+                errors.append('Please enter a valid email')
+            elif '.' not in domain:
+                errors.append('Please enter a valid email')
         if not phone:
             errors.append('Please enter valid Phone number')
         elif not clean_phone.isdigit():
@@ -125,8 +145,6 @@ def home(daycare_id):
         
         
         if not errors:
-            conn=get_db()
-            cursor = conn.cursor()
             cursor.execute('INSERT INTO candidates(daycare_id,name,email,phone,classification,experience,resume_path,cover_letter_path) VALUES(?,?,?,?,?,?,?,?)',(daycare_id,name,email,phone,classification,experience,None,None))
             
             candidate_id = cursor.lastrowid
@@ -165,7 +183,7 @@ def home(daycare_id):
             
         
 
-    return render_template('candidate_info.html',errors=errors,name=name)
+    return render_template('candidate_info.html',errors=errors)
 
 @app.route('/success_message')
 def success_message():
@@ -185,8 +203,8 @@ def registration_page(daycare_id):
         name = request.form.get('name','').strip()
         email = request.form.get('email','').strip()
         password = request.form.get('password','').strip()
-        
         role = request.form.get('role','').strip()
+        
         if not name:
             errors.append('Name required.')
         if not email or '@' not in email:
@@ -203,8 +221,8 @@ def registration_page(daycare_id):
             
             cursor.execute('INSERT INTO users(name,email,password_hash,role) VALUES(?,?,?,?)',(name,email,password_hash,role))
             
-            new_user = cursor.lastrowid
-            cursor.execute('INSERT INTO daycare_membership(daycare_id,user_id) VALUES(?,?)',(daycare_id,new_user))
+            new_user_id = cursor.lastrowid   # ID got from the last person saved
+            cursor.execute('INSERT INTO daycare_membership(daycare_id,user_id) VALUES(?,?)',(daycare_id,new_user_id))
             
         
             conn.commit()
