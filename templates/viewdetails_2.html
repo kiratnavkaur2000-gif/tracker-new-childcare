@@ -61,7 +61,14 @@
                         Schedule Interview
                     </a>
                 </div>
-
             </div>
+        </div>
+        {%if candidate['interview_date']%}
+        <div class="d-grid mb-4">
 
-            {% endblock %}
+            <a href="{{url_for('post_interview_details',candidate_id=candidate['id'])}}"
+                class="btn btn-primary btn-lg shadow-sm">Post-Interview Review</a>
+        </div>
+        {%endif%}
+
+        {% endblock %}

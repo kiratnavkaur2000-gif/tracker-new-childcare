@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;"> <a
+        href="{{url_for('director_dashboard', daycare_id=daycare_id)}}"
+        class="text-secondary text-decoration-none mb-3 d-inline-block">
+        &larr; Back to Dashboard
+    </a>
+</div>
+{%if candidates_interviewed%}
+<table class="table table-hover align-middle">
+   <thead>
+      <tr>
+         <th>Candidate</th>
+         <th>Interview Rating</th>
+         <th>Interview Notes</th>
+         <th>First Aid CPR</th>
+         <th>Police Check</th>
+         <th>Child Abuse Check</th>
+      </tr>
+   </thead>
+
+   <tbody>
+      <div class="container mt-4" style="max-width: 600px;">
+      {% for candidate in candidates_interviewed %}
+       
+         
+
+      <tr>
+         <td>
+            <strong>{{ candidate['name'] }}</strong><br>
+            <small class="text-muted">{{ candidate['email'] }}</small>
+         </td>
+
+
+         <td>{{ candidate['interview_rating'] }}<br></td>
+
+         <td>
+
+            {{ candidate['interview_notes'] }}
+
+         </td>
+
+         <td>{{ checklist_lables[candidate['first_aid_cpr_status']]}}</td>
+         <td>{{checklist_lables[candidate['police_check_status']]}}</td>
+         <td>{{checklist_lables[candidate['child_abuse_check_status']]}}</td>
+         
+      </tr>
+
+      {% endfor %}
+      
+
+   </tbody>
+</table>
+{%else%}
+<p>'No interviewed candidates yet'</p>
+{%endif%}
+
+
+
+{% endblock %}

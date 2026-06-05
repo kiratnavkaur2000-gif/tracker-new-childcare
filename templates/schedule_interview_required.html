@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 650px;">
+
+    <div class="text-center py-5 px-4 border rounded-3 bg-light shadow-sm">
+
+        <div class="mb-3 text-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                class="bi bi-calendar-x" viewBox="0 0 16 16">
+                <path d="M6.146 7.146a.5.5 0 0 1 .708 0L8 8.293l1.146-1.147a.5.5 0 1 1 .708.708L8.707 9l1.147 1.146a.5.5 0 0 1-.708.708L8 9.707l-1.146 1.147a.5.5 0 0 1-.708-.708L7.293 9 6.146 7.854a.5.5 0 0 1 0-.708z" />
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
+            </svg>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-2">Interview Required First</h5>
+
+        <p class="text-muted mx-auto mb-4" style="max-width: 450px;">
+            Please schedule the interview before adding a post-interview review.
+            Once the interview date and time are saved, you can add rating, notes,
+            and checklist updates.
+        </p>
+
+        <a href="{{ url_for('interview_setup', candidate_id=candidate['id']) }}"
+            class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm">
+            Schedule Interview
+        </a>
+
+        <a href="{{ url_for('viewdetails_2', candidate_id=candidate['id']) }}"
+            class="btn btn-outline-secondary btn-sm px-4 rounded-pill ms-2">
+            Back to Candidate
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

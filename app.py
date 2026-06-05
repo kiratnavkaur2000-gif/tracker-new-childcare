@@ -232,11 +232,10 @@ def registration_page(daycare_id):
 @app.route('/login',methods=['GET','POST'])
 def login():
     
-    
     errors=[]
     if request.method == 'POST':
-      email = request.form.get('email','').strip()
-      password = request.form.get('password','').strip()
+      email = request.form.get('email','').strip().lower()
+      password = request.form.get('password','')
 
       if not email or '@' not in email:
           errors.append('invalid email')
@@ -252,7 +251,6 @@ def login():
             conn.close()
             errors.append('Invalid email or password.')
         
-                
         else:
             password_check=check_password_hash(user['password_hash'],password)
             if not password_check:
@@ -289,11 +287,11 @@ def director_dashboard(daycare_id):
     document_filter=request.args.get('document_filter','all')
      
     if document_filter=='complete':   
-        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND first_aid_cpr_status=? AND police_check_status=? AND child_abuse_check_status=? AND status =?',(daycare_id,'available','available','available','interviewed')).fetchall()
+        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND first_aid_cpr_status=? AND police_check_status=? AND child_abuse_check_status=? AND status =? ORDER BY created_at DESC',(daycare_id,'available','available','available','interviewed')).fetchall()
     elif document_filter=='pending':
-        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND status=? AND(first_aid_cpr_status !=? OR police_check_status !=? OR child_abuse_check_status !=? )',(daycare_id,'interviewed','available','available','available')).fetchall()
+        applications=cursor.execute('SELECT * FROM candidates WHERE daycare_id=? AND status=? AND(first_aid_cpr_status !=? OR police_check_status !=? OR child_abuse_check_status !=? ) ORDER BY created_at DESC',(daycare_id,'interviewed','available','available','available')).fetchall()
     else:
-        document_filter== 'all'
+        document_filter= 'all'
         applications=cursor.execute('''SELECT * FROM candidates WHERE daycare_id=? ORDER BY created_at DESC''', (daycare_id,) ).fetchall()
     
     conn.close()
@@ -349,7 +347,7 @@ def viewdetails_2(candidate_id):
     
     user_id = session.get('user_id')
     if not user_id:
-        return redirect('/login')
+        return redirect(url_for('login'))
     print("ROUTE HIT:", request.method)
     conn = get_db()
     cursor=conn.cursor()
@@ -371,10 +369,8 @@ def viewdetails_2(candidate_id):
         if new_status not in allowed_status:
             conn.close()
             return 'not allowed status',400
-        print("FULL FORM:", request.form)
-        print("NEW STATUS:", repr(new_status))
-        print("ALLOWED:", allowed_status)
-        cursor.execute('''UPDATE candidates SET status=? WHERE id =?''',(new_status,candidate['id']) )
+        
+        cursor.execute('''UPDATE candidates SET status=? WHERE id =? AND daycare_id=?''',(new_status,candidate['id'],candidate['daycare_id']) )
         conn.commit()
         conn.close()
         return redirect(url_for('viewdetails_2', candidate_id=candidate_id))
@@ -460,6 +456,10 @@ def post_interview_details(candidate_id):
         conn.close()
         return 'Access denied',403
     
+    if candidate['interview_date'] is None:
+        conn.close()
+        return render_template('schedule_interview_required.html',candidate=candidate)
+    
     if request.method=='POST':
         form_type = request.form.get("form_type")
         if form_type != 'interview_review' and form_type != 'hiring_checklist':
@@ -473,7 +473,7 @@ def post_interview_details(candidate_id):
           if rating not in allowed_ratings:
             conn.close()
             return 'Invalid rating', 400
-          cursor.execute('UPDATE candidates SET interview_notes=?,interview_rating=?,status=? WHERE id=?',(notes,rating,'interviewed',candidate['id']))
+          cursor.execute('UPDATE candidates SET interview_notes=?,interview_rating=?,status=? WHERE id=? AND daycare_id=?',(notes,rating,'interviewed',candidate['id'],candidate['daycare_id']))
           conn.commit()
           conn.close()
           return redirect(url_for('post_interview_details', candidate_id=candidate_id))
@@ -486,20 +486,44 @@ def post_interview_details(candidate_id):
           allowed_checklist_values=['available','not_available','pending','requested']
           if first_aid_cpr not in allowed_checklist_values:
               conn.close()
-              return 'invalid status',404
+              return 'Invalid First Aid/CPR status',400
           if police_clearance not in allowed_checklist_values:
               conn.close()
-              return 'invalid status1',404
+              return 'Invalid Police Check status',400
           if child_abuse_registry not in allowed_checklist_values:
               conn.close()
-              return 'invalid status2',404
-          cursor.execute('UPDATE candidates SET first_aid_cpr_status=?,police_check_status=?,child_abuse_check_status=?  WHERE id=?',(first_aid_cpr,police_clearance,child_abuse_registry,candidate['id']))
+              return 'Invalid Child Abuse Registry status',400
+          cursor.execute('UPDATE candidates SET first_aid_cpr_status=?,police_check_status=?,child_abuse_check_status=?  WHERE id=? AND daycare_id=?',(first_aid_cpr,police_clearance,child_abuse_registry,candidate['id'],candidate['daycare_id']))
           conn.commit()
           conn.close()
           return redirect(url_for('post_interview_details', candidate_id=candidate_id))
 
     conn.close()
     return render_template('post_interview_details.html',candidate=candidate)
+@app.route('/interviewed_candidates/<int:daycare_id>')
+def interviwed_candidates(daycare_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect('/login')
+    conn=get_db()
+    cursor=conn.cursor()
+    daycare_existence = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
+    if daycare_existence is None:
+        conn.close()
+        return 'No daycare found', 404
+    membership_check =cursor.execute('SELECT * FROM daycare_membership WHERE daycare_id=? AND user_id=?',(daycare_id,user_id)).fetchone()
+    if not membership_check:
+        conn.close()
+        return 'Access Denied',403
+    
+    checklist_lables=  {'available':'Available',     
+            'not_available' :'Not available',
+            'not_requested':'Not Requested',
+            'pending':'Pending',
+            'requested':'requested'}
+    candidates_interviewed = cursor.execute('SELECT * FROM candidates WHERE status=? AND daycare_id=?',('interviewed',daycare_id)).fetchall()
+    conn.close()
+    return render_template('interviewed_candidates.html',candidates_interviewed=candidates_interviewed,checklist_lables=checklist_lables,daycare_id=daycare_id)
     
 @app.route('/logout')
 def logout():
