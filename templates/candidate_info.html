@@ -23,12 +23,12 @@
 
         <div class="col-md-6">
             <label class="form-label">Email</label>
-            <input name="email" type="email" class="form-control" required>
+            <input name="email" type="email" class="form-control" value="{{ email }}" required>
         </div>
 
         <div class="col-md-6">
             <label class="form-label">Phone</label>
-            <input name="phone" type="tel" class="form-control" placeholder="(204) 555-0100" required>
+            <input name="phone" type="tel" class="form-control" value="{{ phone}}" placeholder="(204) 555-0100" required>
         </div>
 
         <div class="col-md-6">
@@ -43,7 +43,7 @@
 
         <div class="col-12">
             <label class="form-label">Experience (Age groups worked with)</label>
-            <textarea name="experience" class="form-control" rows="3" required></textarea>
+            <textarea name="experience" class="form-control" rows="3" required>{{ experience}}</textarea>
         </div>
 
         <div class="col-md-6">

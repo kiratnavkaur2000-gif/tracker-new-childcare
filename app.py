@@ -10,7 +10,7 @@ from sendgrid.helpers.mail import Mail
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-app.secret_key = 'hiring@'
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 print("FROM EMAIL:", os.getenv("FROM_EMAIL"))
 print("SENDGRID KEY EXISTS:", os.getenv("SENDGRID_API_KEY") is not None)
@@ -86,6 +86,11 @@ def daycares():
 
 @app.route('/apply/<int:daycare_id>',methods=['GET','POST'])
 def candidate_info(daycare_id):
+    name=''
+    email=''
+    phone=''
+    experience=''
+
     conn=get_db()
     cursor = conn.cursor()
     daycare_existence = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
@@ -182,8 +187,8 @@ def candidate_info(daycare_id):
             return redirect(url_for('success_message'))
             
         
-
-    return render_template('candidate_info.html',errors=errors)
+    conn.close()
+    return render_template('candidate_info.html',errors=errors,name=name,phone=phone,email=email,experience=experience)
 
 @app.route('/success_message')
 def success_message():
@@ -295,7 +300,7 @@ def director_dashboard(daycare_id):
         applications=cursor.execute('''SELECT * FROM candidates WHERE daycare_id=? ORDER BY created_at DESC''', (daycare_id,) ).fetchall()
     
     conn.close()
-    return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence,document_filter=document_filter)
+    return render_template('director_dashboard.html',applications=applications,daycare_existence=daycare_existence,document_filter=document_filter,daycare_id=daycare_id)
           
 @app.route('/view_resume/<int:candidate_id>')
 def view_resume(candidate_id):
@@ -501,7 +506,7 @@ def post_interview_details(candidate_id):
     conn.close()
     return render_template('post_interview_details.html',candidate=candidate)
 @app.route('/interviewed_candidates/<int:daycare_id>')
-def interviwed_candidates(daycare_id):
+def interviewed_candidates(daycare_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect('/login')

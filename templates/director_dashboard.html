@@ -2,10 +2,15 @@
 
 {% block content %}
 
-<h1 class="mb-4">Applications</h1>
-<form method="GET" class="mb-3">
-
-   <label class="form-label fw-bold">Document Filter:</label>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Applications</h1>
+    <a href="{{ url_for('interviewed_candidates', daycare_id=daycare_id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-people-fill me-1"></i> View Interviewed Candidates
+    </a>
+</div>
+<form method="GET" class="d-flex align-items-center gap-2 mb-4">
+   
+   <label class="fw-bold text-nowrap mb-0">Document Filter:</label>
 
     <select name="document_filter" class="form-select w-auto d-inline-block">
         <option value="all" {% if document_filter == 'all' %}selected{% endif %}>
