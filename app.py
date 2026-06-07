@@ -72,18 +72,58 @@ def get_db():
     conn.row_factory=sqlite3.Row
     return conn
 
-@app.route('/daycares',methods=['GET','POST'])
-def daycares():
-    if request.method == 'POST':
-        name = request.form.get('name','').strip()
-         
-        conn=get_db()
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO daycare(name) VALUES(?)',(name,))
-        conn.commit()
-        conn.close()
-    return render_template('daycare.html')
+@app.route('/admin/daycares', methods=['GET', 'POST'])
+def admin_daycares():
+    user_id = session.get('user_id')
 
+    if not user_id:
+        return redirect(url_for('login'))
+
+    if session.get('role') != 'platform_admin':
+        return 'Access denied', 403
+
+    errors = []
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+
+        if not name:
+            errors.append('Daycare name required.')
+
+        if not errors:
+            existing_daycare = cursor.execute(
+                'SELECT * FROM daycare WHERE LOWER(name) = LOWER(?)',
+                (name,)
+            ).fetchone()
+
+            if existing_daycare:
+                errors.append('This daycare already exists.')
+
+        if not errors:
+            cursor.execute(
+                'INSERT INTO daycare(name) VALUES(?)',
+                (name,)
+            )
+
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('admin_daycares'))
+
+    daycares = cursor.execute(
+        'SELECT * FROM daycare ORDER BY name'
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        'admin_daycares.html',
+        errors=errors,
+        daycares=daycares
+    )
 @app.route('/apply/<int:daycare_id>',methods=['GET','POST'])
 def candidate_info(daycare_id):
     name=''
@@ -197,42 +237,91 @@ def success_message():
 
 @app.route('/admin/daycares/<int:daycare_id>/create-user', methods=['GET','POST'])
 def registration_page(daycare_id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        return redirect(url_for('login'))
+
+    if session.get('role') != 'platform_admin':
+        return 'Access denied', 403
+
+    errors = []
+
     conn = get_db()
     cursor = conn.cursor()
-    check_daycare = cursor.execute('SELECT * FROM daycare WHERE id=?',(daycare_id,)).fetchone()
+
+    check_daycare = cursor.execute(
+        'SELECT * FROM daycare WHERE id = ?',
+        (daycare_id,)
+    ).fetchone()
+
     if check_daycare is None:
-        return 'No daycare found.'
-    
-    errors = []
+        conn.close()
+        return 'No daycare found.', 404
+
     if request.method == 'POST':
-        name = request.form.get('name','').strip()
-        email = request.form.get('email','').strip()
-        password = request.form.get('password','').strip()
-        role = request.form.get('role','').strip()
-        
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        role = request.form.get('role', '').strip()
+
+        allowed_roles = ['director', 'assistant_director', 'staff']
+
         if not name:
             errors.append('Name required.')
+
         if not email or '@' not in email:
-            errors.append('email required.')
+            errors.append('Valid email required.')
+
         if not password:
-            errors.append('password required.')
-        
-        if not role:
-            errors.append('role required.')
-        
-        
+            errors.append('Password required.')
+
+        if role not in allowed_roles:
+            errors.append('Valid role required.')
+
         if not errors:
-            password_hash= generate_password_hash(password)
-            
-            cursor.execute('INSERT INTO users(name,email,password_hash,role) VALUES(?,?,?,?)',(name,email,password_hash,role))
-            
-            new_user_id = cursor.lastrowid   # ID got from the last person saved
-            cursor.execute('INSERT INTO daycare_membership(daycare_id,user_id) VALUES(?,?)',(daycare_id,new_user_id))
-            
-        
+            existing_user = cursor.execute(
+                'SELECT * FROM users WHERE email = ?',
+                (email,)
+            ).fetchone()
+
+            if existing_user:
+                errors.append('A user with this email already exists.')
+
+        if not errors:
+            password_hash = generate_password_hash(password)
+
+            cursor.execute(
+                '''
+                INSERT INTO users(name, email, password_hash, role)
+                VALUES (?, ?, ?, ?)
+                ''',
+                (name, email, password_hash, role)
+            )
+
+            new_user_id = cursor.lastrowid
+
+            cursor.execute(
+                '''
+                INSERT INTO daycare_membership(daycare_id, user_id, role)
+                VALUES (?, ?, ?)
+                ''',
+                (daycare_id, new_user_id, role)
+            )
+
             conn.commit()
             conn.close()
-    return render_template('register.html',errors=errors,daycare=check_daycare)
+
+            return redirect(url_for('admin_daycares'))
+
+    conn.close()
+
+    return render_template(
+        'register.html',
+        errors=errors,
+        daycare=check_daycare
+    )
+    
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -262,13 +351,19 @@ def login():
               errors.append('Invalid email or password.')
               conn.close()
             else:
+             session['user_id']= user['id'] 
+             session['role'] =user['role'] 
+
+             if user['role'] == 'platform_admin':
+                    conn.close()
+                    return redirect(url_for('admin_daycares'))
+
              membership_check = cursor.execute('SELECT * FROM daycare_membership WHERE user_id=?',(user['id'],)).fetchone()
              if not membership_check:
                  conn.close()
-                 return 'access denied'
-             session['user_id']= user['id'] 
-             session['role'] =user['role'] 
-        
+                 return 'Your account is not connected to a daycare. Please contact the platform admin.', 403
+             session['daycare_id'] = membership_check['daycare_id']
+ 
              conn.close()
              return redirect(url_for('director_dashboard',daycare_id=membership_check['daycare_id']))
     return render_template('login.html', errors=errors)
