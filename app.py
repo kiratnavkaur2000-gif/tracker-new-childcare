@@ -526,6 +526,15 @@ def interview_setup(candidate_id):
                     'interview_setup.html',candidate=candidate,errors=errors)
             
             except Exception as e:
+               print("EMAIL ERROR:", repr(e), flush=True)
+
+               if hasattr(e, "status_code"):
+                 print("SENDGRID STATUS:", e.status_code, flush=True)
+
+               if hasattr(e, "body"):
+                  print("SENDGRID BODY:", e.body, flush=True)
+
+    
                errors.append("Email could not be sent. Please try again.")
                
                conn.close()
