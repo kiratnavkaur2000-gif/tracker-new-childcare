@@ -12,8 +12,7 @@ app = Flask(__name__)
 
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
-print("FROM EMAIL:", os.getenv("FROM_EMAIL"))
-print("SENDGRID KEY EXISTS:", os.getenv("SENDGRID_API_KEY") is not None)
+
 
 UPLOAD_FOLDER = 'uploads'
 RESUME_FOLDER = os.path.join(UPLOAD_FOLDER,'resumes')
@@ -517,9 +516,7 @@ def interview_setup(candidate_id):
              return 'Daycare not found.', 404
 
             email= build_interview_email(candidate, daycare, interview_date, interview_time,interview_location)
-            print("To:", email["to_email"])
-            print("Subject:", email["subject"])
-            print(email["email_body"])
+            
             try:
                status_code = send_email_with_sendgrid(email)
                if status_code < 200 or status_code >= 300:
@@ -530,7 +527,7 @@ def interview_setup(candidate_id):
             
             except Exception as e:
                errors.append("Email could not be sent. Please try again.")
-               print("SENDGRID ERROR:", e)
+               
                conn.close()
                return render_template( 'interview_setup.html',candidate=candidate,errors=errors)
             
