@@ -27,8 +27,6 @@ CREATE TABLE IF NOT EXISTS candidates (
                 cover_letter_path TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 status TEXT NOT NULL DEFAULT 'new',
-                FOREIGN KEY (daycare_id) REFERENCES daycare(id),
-                UNIQUE (daycare_id,email),
                 interview_date TEXT,
                 interview_time TEXT,
                 interview_location TEXT,
@@ -37,7 +35,9 @@ CREATE TABLE IF NOT EXISTS candidates (
                 interview_rating INTEGER,
                 first_aid_cpr_status TEXT DEFAULT 'pending',
                 police_check_status TEXT DEFAULT 'pending',
-                child_abuse_check_status TEXT DEFAULT 'pending'
+                child_abuse_check_status TEXT DEFAULT 'pending',
+                FOREIGN KEY (daycare_id) REFERENCES daycare(id),
+                UNIQUE (daycare_id,email)
                 );
  
 CREATE TABLE IF NOT EXISTS users (
