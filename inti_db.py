@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS candidates (
                 first_aid_cpr_status TEXT DEFAULT 'pending',
                 police_check_status TEXT DEFAULT 'pending',
                 child_abuse_check_status TEXT DEFAULT 'pending'
+                );
  
 CREATE TABLE IF NOT EXISTS users (
                  id INTEGER PRIMARY KEY AUTOINCREMENT,
