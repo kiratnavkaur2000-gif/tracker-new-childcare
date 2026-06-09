@@ -28,8 +28,17 @@ CREATE TABLE IF NOT EXISTS candidates (
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 status TEXT NOT NULL DEFAULT 'new',
                 FOREIGN KEY (daycare_id) REFERENCES daycare(id),
-                UNIQUE (daycare_id,email)
-);
+                UNIQUE (daycare_id,email),
+                interview_date TEXT,
+                interview_time TEXT,
+                interview_location TEXT,
+                interview_email_sent_at TEXT,
+                interview_notes TEXT,
+                interview_rating INTEGER,
+                first_aid_cpr_status TEXT DEFAULT 'pending',
+                police_check_status TEXT DEFAULT 'pending',
+                child_abuse_check_status TEXT DEFAULT 'pending'
+ 
 CREATE TABLE IF NOT EXISTS users (
                  id INTEGER PRIMARY KEY AUTOINCREMENT,
                  name TEXT NOT NULL,
