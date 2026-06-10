@@ -36,24 +36,40 @@ def get_file_extension(filename):
 
 
 def build_interview_email(candidate,daycare,interview_date,interview_time,interview_location):
-            email={
-                  'to_email' : candidate['email'],
-                   'subject' : "Interview Invitation",
-                   'email_body' : f"""
-            Hi {candidate['name']},
-
-            Thank you for applying to {daycare['name']}.
-            We would like to invite you for an interview.
-            Date: {interview_date}
-            Time: {interview_time}
-            Location: {interview_location}
+            subject = f"Interview Invitation - {daycare['name']}"
             
-            Please reply to confirm if this time works for you.
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+             <p>Hello {candidate['name']},</p>
 
-            Thank you,
-            {daycare['name']}"""
-            }
-            return email
+        <p>Thank you for applying to <strong>{daycare['name']}</strong>. 
+        We would like to invite you for an interview.</p>
+
+        <h3>Interview Details</h3>
+
+        <p>
+            <strong>Date:</strong> {interview_date}<br>
+            <strong>Time:</strong> {interview_time}<br>
+            <strong>Location:</strong> {interview_location}
+        </p>
+
+        <p>Please bring any required documents you would like us to review, 
+        such as your resume, ECE classification, First Aid/CPR, or references.</p>
+
+        <p>If this time does not work for you, please reply to this email so we can arrange another time.</p>
+
+        <p>
+            Thank you,<br>
+            <strong>{daycare['name']} Hiring Team</strong>
+        </p>
+    </div>
+    """
+
+            return {
+        "to_email": candidate["email"],
+        "subject": subject,
+        "html_content": html_content
+    }
 def send_email_with_sendgrid(email):
     message = Mail(
         from_email=os.getenv("FROM_EMAIL"),
